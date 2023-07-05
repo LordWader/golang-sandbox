@@ -5,71 +5,86 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 )
 
-var wg sync.WaitGroup
+func consumeBatch(ctx context.Context, in <-chan int) <-chan struct{} {
+	done := make(chan struct{})
 
-func consumeBatch(ctx context.Context, in <-chan int, stop <-chan bool) {
-	defer wg.Done()
-	for {
-		select {
-		case _ = <-stop:
-			fmt.Printf("Length of channel: %d \n", len(in))
-			for len(in) > 0 {
-				fmt.Printf("value from channel after finish: %d \n", <-in)
+	go func() {
+		defer close(done) // no need to send anything here, close is an event itself
+
+		buf := make([]int, 0, 10)
+
+		defer func() {
+			fmt.Println("Done consuming")
+			fmt.Printf("Length of buffer: %d; channel: %d\n", len(buf), len(in))
+			for _, v := range buf {
+				fmt.Printf("value from buffer: %d \n", v)
 			}
-			return
-		case _ = <- ctx.Done():
-			fmt.Printf("Length of channel: %d\n", len(in))
 			for len(in) > 0 {
-				fmt.Printf("value from channel after cancelling: %d \n", <-in)
+				fmt.Printf("value from channel: %d \n", <-in)
 			}
-			return
-		default:
-			if len(in) < 9 {
-				time.Sleep(time.Second)
-				fmt.Printf("sleep and get len channel: %d \n", len(in))
-			} else {
-				for i := 0; i < 10; i++ {
-					fmt.Printf("value from channel: %d \n", <-in)
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case v, ok := <-in:
+				if !ok {
+					return
+				}
+				buf = append(buf, v)
+
+				if len(buf) < 10 {
+					time.Sleep(time.Second)
+					fmt.Printf("sleep and get len buffer: %d \n", len(buf))
+				} else {
+					for i, v := range buf {
+						fmt.Printf("value %d from channel: %d \n", i, v)
+					}
+					buf = buf[:0]
 				}
 			}
 		}
-	}
+	}()
+
+	return done
 }
 
-func produceBatch(ctx context.Context, in chan<- int, stop chan<- bool) {
-	var i int
-	defer wg.Done()
-	for i < 30 {
-		select {
-		case _ = <-ctx.Done():
-			//stop <- true
-			fmt.Println("Interrupting, closing goroutine")
-			return
-		default:
-			in <- i
-			time.Sleep(time.Millisecond * 500)
-			fmt.Printf("Adding num %d to channel\n", i)
-			i++
+func produceBatch(ctx context.Context) <-chan int {
+	out := make(chan int) // make it unbuffered so no events are lost on cancel
+
+	go func() {
+		defer close(out)
+
+		for i := 0; i < 30; i++ {
+			select {
+			case <-ctx.Done():
+				fmt.Println("Interrupting, closing goroutine")
+				return
+			default:
+				out <- i
+				time.Sleep(time.Millisecond * 500)
+				fmt.Printf("Adding num %d to channel\n", i)
+			}
 		}
-	}
-	stop <- true
-	fmt.Println("Finish producing messages")
-	return
+		fmt.Println("Finish producing messages")
+	}()
+
+	return out
 }
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	wg.Add(2)
-	input := make(chan int, 15)
-	stop := make(chan bool)
-	go produceBatch(ctx, input, stop)
-	go consumeBatch(ctx, input, stop)
-	wg.Wait()
+
+	input := produceBatch(ctx)
+	done := consumeBatch(ctx, input)
+
+	<-done
+
 	fmt.Printf("Done with batch processing of events")
 }
