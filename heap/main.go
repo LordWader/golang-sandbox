@@ -2,12 +2,6 @@ package main
 
 import "fmt"
 
-/*
-		   0
-          123
-    345   678  91011
-*/
-
 type DHeapNode struct {
 	elem, priority int
 }
