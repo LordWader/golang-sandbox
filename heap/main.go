@@ -12,19 +12,20 @@ type DHeapNode struct {
 	elem, priority int
 }
 
-type BinHeapHeap struct {
-	Width int
-	Heap  []DHeapNode
+type DHeap struct {
+	Width   int
+	Heap    []DHeapNode
+	Address map[*DHeapNode]int
 }
 
-func NewBinHeap(d int) *BinHeapHeap {
-	return &BinHeapHeap{
+func NewDHeap(d int) *DHeap {
+	return &DHeap{
 		Width: d,
 		Heap:  make([]DHeapNode, 0),
 	}
 }
 
-func (dh *BinHeapHeap) bubbleUp() {
+func (dh *DHeap) bubbleUp() {
 	var toCmp int
 	lastIndex := len(dh.Heap) - 1
 	for lastIndex != 0 {
@@ -42,7 +43,7 @@ func (dh *BinHeapHeap) bubbleUp() {
 	}
 }
 
-func (dh *BinHeapHeap) Insert(elem, priority int) {
+func (dh *DHeap) Insert(elem, priority int) {
 	dh.Heap = append(dh.Heap, DHeapNode{
 		elem:     elem,
 		priority: priority,
@@ -50,14 +51,17 @@ func (dh *BinHeapHeap) Insert(elem, priority int) {
 	dh.bubbleUp()
 }
 
-func (dh *BinHeapHeap) Top() DHeapNode {
+func (dh *DHeap) Top() DHeapNode {
 	carry := dh.Heap[0]
 	dh.Heap = dh.Heap[1:]
+	if len(dh.Heap) > 0 {
+		dh.bubbleUp()
+	}
 	return carry
 }
 
 func main() {
-	h := NewBinHeap(2)
+	h := NewDHeap(5)
 	arr := []int{5, 6, 1, 2, 7}
 	for ind, el := range arr {
 		h.Insert(ind, el)
