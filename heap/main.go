@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 type DHeapNode struct {
-	elem, priority int
+	elem, priority, arrayIndex, heapIndex int
 }
 
 type DHeap struct {
@@ -21,14 +21,9 @@ func NewDHeap(d int) *DHeap {
 }
 
 func (dh *DHeap) bubbleUp(startIndex int) {
-	var toCmp int
 	lastIndex := startIndex
 	for lastIndex != 0 {
-		for i := 0; i < dh.Width; i++ {
-			if (lastIndex-i)%dh.Width == 0 {
-				toCmp = (lastIndex - i) / dh.Width
-			}
-		}
+		toCmp := (lastIndex - (lastIndex % dh.Width)) / dh.Width
 		if dh.Heap[lastIndex].priority >= dh.Heap[toCmp].priority {
 			dh.Heap[lastIndex], dh.Heap[toCmp] = dh.Heap[toCmp], dh.Heap[lastIndex]
 			dh.Address[lastIndex] = dh.Heap[toCmp]
@@ -40,10 +35,11 @@ func (dh *DHeap) bubbleUp(startIndex int) {
 	}
 }
 
-func (dh *DHeap) Insert(elem, priority int) {
+func (dh *DHeap) Insert(elem, priority, index int) {
 	newNode := DHeapNode{
-		elem:     elem,
-		priority: priority,
+		elem:       elem,
+		priority:   priority,
+		arrayIndex: index,
 	}
 	dh.Heap = append(dh.Heap, newNode)
 	dh.Address[len(dh.Heap)-1] = newNode
@@ -65,25 +61,26 @@ func (dh *DHeap) Modify(priority, index int) {
 		panic("No node in heap!")
 	}
 	newNode := DHeapNode{
-		elem:     el.elem,
-		priority: priority,
+		elem:       el.elem,
+		priority:   priority,
+		arrayIndex: el.arrayIndex,
 	}
-	dh.Heap[index] = newNode
-	dh.bubbleUp(index)
+	dh.Heap[el.heapIndex] = newNode
+	dh.bubbleUp(el.heapIndex)
 }
 
 func main() {
-	h := NewDHeap(5)
+	h := NewDHeap(2)
 	arr := []int{5, 6, 1, 2, 7}
 	for ind, el := range arr {
-		h.Insert(ind, el)
+		h.Insert(ind, el, ind)
 	}
 	for len(h.Heap) > 0 {
 		fmt.Println(h.Top())
 	}
 	fmt.Println("========================")
 	for ind, el := range arr {
-		h.Insert(ind, el)
+		h.Insert(ind, el, ind)
 	}
 	for i := 0; i < 3; i++ {
 		h.Modify(i*3, i)
