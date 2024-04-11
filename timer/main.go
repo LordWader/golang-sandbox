@@ -10,7 +10,7 @@ import (
 func heavyCalc(ctx context.Context, in chan int) {
 	r := rand.Intn(3)
 	select {
-	case <-time.Tick(time.Duration(r) * time.Second):
+	case <-time.Tick(time.Duration(r)*time.Second + time.Millisecond*500):
 		in <- 42
 	case <-ctx.Done():
 		fmt.Println("Exiting calculation goroutine!")
@@ -26,7 +26,7 @@ func process(ctx context.Context) {
 	select {
 	case res := <-ch:
 		fmt.Printf("Got result from heavy calc: %d\n", res)
-	case <-time.After(time.Second * 2):
+	case <-time.Tick(time.Second * 2):
 		fmt.Println("Timed out!")
 	}
 }
