@@ -66,7 +66,7 @@ func (w *Worker) Process(wg *sync.WaitGroup) {
 }
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 	in := make(chan int, POOL_SIZE)
 	workers := make([]*Worker, 0, POOL_SIZE)
 	for i := 0; i < POOL_SIZE; i++ {
@@ -94,7 +94,7 @@ func main() {
 			r := rand.Intn(max-min+1) + min
 			if r%10 == 0 {
 				fmt.Println("Sending done signal")
-				ctx.Done()
+				cancel()
 				return
 			}
 			time.Sleep(time.Millisecond * 500)
