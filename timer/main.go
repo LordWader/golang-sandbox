@@ -7,10 +7,14 @@ import (
 	"time"
 )
 
-func heavyCalc() int {
+func heavyCalc(ctx context.Context, in chan int) {
 	r := rand.Intn(3)
-	time.Sleep(time.Duration(r) * time.Second)
-	return 42
+	select {
+	case <-time.Tick(time.Duration(r) * time.Second):
+		in <- 42
+	case <-ctx.Done():
+		fmt.Println("Exiting calculation goroutine!")
+	}
 }
 
 func process(ctx context.Context) {
@@ -18,15 +22,7 @@ func process(ctx context.Context) {
 	defer cancel()
 	ch := make(chan int, 1)
 
-	go func() {
-		defer close(ch)
-		select {
-		case <-ctx.Done():
-			fmt.Println("Done by context")
-		default:
-			ch <- heavyCalc()
-		}
-	}()
+	go heavyCalc(ctx, ch)
 	select {
 	case res := <-ch:
 		fmt.Printf("Got result from heavy calc: %d\n", res)
