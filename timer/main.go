@@ -10,7 +10,7 @@ import (
 func heavyCalc(ctx context.Context, in chan int) {
 	r := rand.Intn(3)
 	select {
-	case <-time.Tick(time.Duration(r)*time.Second + time.Millisecond*500):
+	case <-time.Tick(time.Duration(r)*time.Second + time.Millisecond*110):
 		in <- 42
 	case <-ctx.Done():
 		fmt.Println("Exiting calculation goroutine!")
