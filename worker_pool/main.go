@@ -11,9 +11,10 @@ import (
 const POOL_SIZE = 10
 
 type Worker struct {
-	id  int
-	in  chan int
-	ctx context.Context
+	id      int
+	in      chan int
+	ctx     context.Context
+	handler func(w *Worker, val int)
 }
 
 type WorkerPool struct {
@@ -37,11 +38,12 @@ func (wp *WorkerPool) Run() {
 	wp.wg.Wait()
 }
 
-func NewWorker(in chan int, ctx context.Context, id int) *Worker {
+func NewWorker(in chan int, ctx context.Context, id int, handler func(w *Worker, val int)) *Worker {
 	return &Worker{
-		in:  in,
-		ctx: ctx,
-		id:  id,
+		in:      in,
+		ctx:     ctx,
+		id:      id,
+		handler: handler,
 	}
 }
 
@@ -59,10 +61,14 @@ func (w *Worker) Process(wg *sync.WaitGroup) {
 				fmt.Printf("Channel close! Worker %d stopped!\n", w.id)
 				return
 			}
-			time.Sleep(time.Second)
-			fmt.Printf("Worker %d, processed num: %d\n", w.id, val)
+			w.handler(w, val)
 		}
 	}
+}
+
+func Task(w *Worker, val int) {
+	time.Sleep(time.Second * 3)
+	fmt.Printf("Worker %d, processed num: %d\n", w.id, val)
 }
 
 func main() {
@@ -70,23 +76,26 @@ func main() {
 	in := make(chan int, POOL_SIZE)
 	workers := make([]*Worker, 0, POOL_SIZE)
 	for i := 0; i < POOL_SIZE; i++ {
-		workers = append(workers, NewWorker(in, ctx, i))
+		workers = append(workers, NewWorker(in, ctx, i, Task))
 	}
 	workerPool := NewWorkerPool(workers)
 	go func() {
 		defer close(in)
 		i := 0
 	loop:
-		for i < 50 {
+		for i < 500 {
 			select {
 			case <-ctx.Done():
 				break loop
 			case in <- i:
 				i++
+			case <-time.Tick(time.Second * 2):
+				fmt.Println("Overflow!")
+				cancel()
 			}
 		}
 	}()
-	// simulate shutdown
+	//simulate shutdown
 	go func() {
 		min := 10
 		max := 30
