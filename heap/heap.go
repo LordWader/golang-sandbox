@@ -12,6 +12,20 @@ type DHeap struct {
 	Address map[int]DHeapNode
 }
 
+func intMin(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
+
+func intMax(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 func NewDHeap(d int) *DHeap {
 	return &DHeap{
 		Width:   d,
@@ -23,8 +37,8 @@ func NewDHeap(d int) *DHeap {
 func (dh *DHeap) bubbleUp(startIndex int) {
 	lastIndex := startIndex
 	for lastIndex != 0 {
-		toCmp := (lastIndex - (lastIndex % dh.Width)) / dh.Width
-		if dh.Heap[lastIndex].priority >= dh.Heap[toCmp].priority {
+		toCmp := (lastIndex - (intMax(1, lastIndex%dh.Width))) / dh.Width
+		if dh.Heap[lastIndex].priority < dh.Heap[toCmp].priority {
 			dh.Heap[lastIndex], dh.Heap[toCmp] = dh.Heap[toCmp], dh.Heap[lastIndex]
 			dh.Address[lastIndex] = dh.Heap[toCmp]
 			dh.Address[toCmp] = dh.Heap[lastIndex]
@@ -36,17 +50,10 @@ func (dh *DHeap) bubbleUp(startIndex int) {
 }
 
 func (dh *DHeap) getMaxPriority(idx int) (DHeapNode, int) {
-	// identify leaf node
-	if idx*dh.Width+1 > len(dh.Heap)-1 {
-		return DHeapNode{}, -1
-	}
 	// dummy start
 	carry, ind := dh.Heap[idx*dh.Width+1], idx*dh.Width+1
-	for i := idx*dh.Width + 2; i < (idx+1)*dh.Width+1; i++ {
-		if i > len(dh.Heap)-1 {
-			break
-		}
-		if dh.Heap[i].priority >= carry.priority {
+	for i := idx*dh.Width + 2; i < intMin((idx+1)*dh.Width+1, len(dh.Heap)); i++ {
+		if dh.Heap[i].priority < carry.priority {
 			carry = dh.Heap[i]
 			ind = i
 		}
@@ -54,13 +61,17 @@ func (dh *DHeap) getMaxPriority(idx int) (DHeapNode, int) {
 	return carry, ind
 }
 
+func (dh *DHeap) getLeafIndex(idx int) bool {
+	if idx*dh.Width+1 > len(dh.Heap)-1 {
+		return true
+	}
+	return false
+}
+
 func (dh *DHeap) siftDown(start int) {
-	for start != len(dh.Heap) {
+	for !dh.getLeafIndex(start) {
 		carry, ind := dh.getMaxPriority(start)
-		if ind == -1 {
-			return
-		}
-		if dh.Heap[start].priority <= carry.priority {
+		if dh.Heap[start].priority > carry.priority {
 			dh.Heap[start], dh.Heap[ind] = dh.Heap[ind], dh.Heap[start]
 			start = ind
 		} else {
@@ -106,7 +117,7 @@ func (dh *DHeap) Modify(priority, index int) {
 
 func main() {
 	h := NewDHeap(4)
-	arr := []int{5, 6, 1, 2, 7}
+	arr := []int{89205, 44720, 70877, -30824, -75881, -1732, 3873, 34959, 55048, -72593}
 	for ind, el := range arr {
 		h.Insert(ind, el, ind)
 	}
