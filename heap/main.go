@@ -35,6 +35,40 @@ func (dh *DHeap) bubbleUp(startIndex int) {
 	}
 }
 
+func (dh *DHeap) getMaxPriority(idx int) (DHeapNode, int) {
+	// identify leaf node
+	if idx*dh.Width+1 > len(dh.Heap)-1 {
+		return DHeapNode{}, -1
+	}
+	// dummy start
+	carry, ind := dh.Heap[idx*dh.Width+1], idx*dh.Width+1
+	for i := idx*dh.Width + 2; i < (idx+1)*dh.Width+1; i++ {
+		if i > len(dh.Heap)-1 {
+			break
+		}
+		if dh.Heap[i].priority >= carry.priority {
+			carry = dh.Heap[i]
+			ind = i
+		}
+	}
+	return carry, ind
+}
+
+func (dh *DHeap) siftDown(start int) {
+	for start != len(dh.Heap) {
+		carry, ind := dh.getMaxPriority(start)
+		if ind == -1 {
+			return
+		}
+		if dh.Heap[start].priority <= carry.priority {
+			dh.Heap[start], dh.Heap[ind] = dh.Heap[ind], dh.Heap[start]
+			start = ind
+		} else {
+			return
+		}
+	}
+}
+
 func (dh *DHeap) Insert(elem, priority, index int) {
 	newNode := DHeapNode{
 		elem:       elem,
@@ -48,9 +82,10 @@ func (dh *DHeap) Insert(elem, priority, index int) {
 
 func (dh *DHeap) Top() DHeapNode {
 	carry := dh.Heap[0]
-	dh.Heap = dh.Heap[1:]
+	dh.Heap[0] = dh.Heap[len(dh.Heap)-1]
+	dh.Heap = dh.Heap[:len(dh.Heap)-1]
 	if len(dh.Heap) > 0 {
-		dh.bubbleUp(len(dh.Heap) - 1)
+		dh.siftDown(0)
 	}
 	return carry
 }
@@ -70,7 +105,7 @@ func (dh *DHeap) Modify(priority, index int) {
 }
 
 func main() {
-	h := NewDHeap(2)
+	h := NewDHeap(4)
 	arr := []int{5, 6, 1, 2, 7}
 	for ind, el := range arr {
 		h.Insert(ind, el, ind)
@@ -78,14 +113,14 @@ func main() {
 	for len(h.Heap) > 0 {
 		fmt.Println(h.Top())
 	}
-	fmt.Println("========================")
-	for ind, el := range arr {
-		h.Insert(ind, el, ind)
-	}
-	for i := 0; i < 3; i++ {
-		h.Modify(i*3, i)
-	}
-	for len(h.Heap) > 0 {
-		fmt.Println(h.Top())
-	}
+	//fmt.Println("========================")
+	//for ind, el := range arr {
+	//	h.Insert(ind, el, ind)
+	//}
+	////for i := 0; i < 3; i++ {
+	//h.Modify(0, 0)
+	////}
+	//for len(h.Heap) > 0 {
+	//	fmt.Println(h.Top())
+	//}
 }
