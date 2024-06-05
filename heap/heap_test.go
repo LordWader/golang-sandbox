@@ -18,7 +18,7 @@ func GenRandomArray(size int) []int {
 func TestDHeap_Top(t *testing.T) {
 	// Initialize data
 	a := GenRandomArray(1000000)
-	h := NewDHeap(4)
+	h := NewDHeap(4, 1000000)
 	for _, elem := range a {
 		h.Insert(elem)
 	}
@@ -34,11 +34,12 @@ func TestDHeap_Top(t *testing.T) {
 }
 
 func BenchmarkDHeap_Insert(b *testing.B) {
-	a := GenRandomArray(100)
+	arraySize := 100000
+	a := GenRandomArray(arraySize)
 	// reset timer after generating sample
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		h := NewDHeap(4)
+		h := NewDHeap(4, arraySize)
 		for _, elem := range a {
 			h.Insert(elem)
 		}
@@ -46,10 +47,11 @@ func BenchmarkDHeap_Insert(b *testing.B) {
 }
 
 func BenchmarkDHeap_Top(b *testing.B) {
+	arraySize := 100000
 	for i := 0; i < b.N; i++ {
 		// Init Heap
-		a := GenRandomArray(100)
-		h := NewDHeap(4)
+		a := GenRandomArray(arraySize)
+		h := NewDHeap(4, arraySize)
 		for _, elem := range a {
 			h.Insert(elem)
 		}

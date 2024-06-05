@@ -32,10 +32,10 @@ Min D-Heap implementation
 Modify could be implemented, but it depends on some complex "business logic"
 */
 
-func NewDHeap(d int) *DHeap {
+func NewDHeap(d, length int) *DHeap {
 	return &DHeap{
 		Width: d,
-		Heap:  make([]*DHeapNode, 0),
+		Heap:  make([]*DHeapNode, 0, length),
 	}
 }
 
@@ -106,8 +106,8 @@ func (dh *DHeap) Top() *DHeapNode {
 }
 
 func main() {
-	h := NewDHeap(4)
 	arr := []int{89205, 44720, 70877, -30824, -75881, -1732, 3873, 34959, 55048, -72593}
+	h := NewDHeap(4, len(arr))
 	for _, el := range arr {
 		h.Insert(el)
 	}
