@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 )
@@ -58,5 +59,24 @@ func BenchmarkDHeap_Top(b *testing.B) {
 		for len(h.Heap) > 0 {
 			h.Top()
 		}
+	}
+}
+
+func BenchmarkDHeap_TopForOptimalD(b *testing.B) {
+	var table [20]*DHeap
+	for i := 0; i < 20; i++ {
+		arr := GenRandomArray(1000000)
+		h := NewDHeap(i+2, 1000000)
+		for _, elem := range arr {
+			h.Insert(elem)
+		}
+		table[i] = h
+	}
+	for j, heap := range table {
+		b.Run(fmt.Sprintf("heap.Top%d", heap.Width), func(b *testing.B) {
+			for len(table[j].Heap) > 0 {
+				table[j].Top()
+			}
+		})
 	}
 }
