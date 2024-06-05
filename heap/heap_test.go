@@ -19,8 +19,8 @@ func TestDHeap_Top(t *testing.T) {
 	// Initialize data
 	a := GenRandomArray(1000000)
 	h := NewDHeap(4)
-	for idx, elem := range a {
-		h.Insert(1, elem, idx)
+	for _, elem := range a {
+		h.Insert(elem)
 	}
 	carry := h.Top()
 	// testing min d-heap
@@ -30,7 +30,6 @@ func TestDHeap_Top(t *testing.T) {
 			t.Fail()
 		}
 		carry = c
-
 	}
 }
 
@@ -40,8 +39,8 @@ func BenchmarkDHeap_Insert(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h := NewDHeap(4)
-		for idx, elem := range a {
-			h.Insert(1, elem, idx)
+		for _, elem := range a {
+			h.Insert(elem)
 		}
 	}
 }
@@ -51,8 +50,8 @@ func BenchmarkDHeap_Top(b *testing.B) {
 		// Init Heap
 		a := GenRandomArray(100)
 		h := NewDHeap(4)
-		for idx, elem := range a {
-			h.Insert(1, elem, idx)
+		for _, elem := range a {
+			h.Insert(elem)
 		}
 		for len(h.Heap) > 0 {
 			h.Top()

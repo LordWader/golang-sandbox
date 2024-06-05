@@ -1,15 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type DHeapNode struct {
-	elem, priority, arrayIndex, heapIndex int
+	priority int
 }
 
 type DHeap struct {
-	Width   int
-	Heap    []DHeapNode
-	Address map[int]DHeapNode
+	Width int
+	Heap  []*DHeapNode
 }
 
 func intMin(a, b int) int {
@@ -26,12 +27,20 @@ func intMax(a, b int) int {
 	return b
 }
 
+/*
+Min D-Heap implementation
+Modify could be implemented, but it depends on some complex "business logic"
+*/
+
 func NewDHeap(d int) *DHeap {
 	return &DHeap{
-		Width:   d,
-		Heap:    make([]DHeapNode, 0),
-		Address: make(map[int]DHeapNode),
+		Width: d,
+		Heap:  make([]*DHeapNode, 0),
 	}
+}
+
+func (dh *DHeap) swap(first, second int) {
+	dh.Heap[first], dh.Heap[second] = dh.Heap[second], dh.Heap[first]
 }
 
 func (dh *DHeap) bubbleUp(startIndex int) {
@@ -39,9 +48,7 @@ func (dh *DHeap) bubbleUp(startIndex int) {
 	for lastIndex != 0 {
 		toCmp := (lastIndex - (intMax(1, lastIndex%dh.Width))) / dh.Width
 		if dh.Heap[lastIndex].priority < dh.Heap[toCmp].priority {
-			dh.Heap[lastIndex], dh.Heap[toCmp] = dh.Heap[toCmp], dh.Heap[lastIndex]
-			dh.Address[lastIndex] = dh.Heap[toCmp]
-			dh.Address[toCmp] = dh.Heap[lastIndex]
+			dh.swap(lastIndex, toCmp)
 			lastIndex = toCmp
 		} else {
 			break
@@ -49,7 +56,7 @@ func (dh *DHeap) bubbleUp(startIndex int) {
 	}
 }
 
-func (dh *DHeap) getMaxPriority(idx int) (DHeapNode, int) {
+func (dh *DHeap) getMaxPriority(idx int) (*DHeapNode, int) {
 	// dummy start
 	carry, ind := dh.Heap[idx*dh.Width+1], idx*dh.Width+1
 	for i := idx*dh.Width + 2; i < intMin((idx+1)*dh.Width+1, len(dh.Heap)); i++ {
@@ -72,7 +79,7 @@ func (dh *DHeap) siftDown(start int) {
 	for !dh.getLeafIndex(start) {
 		carry, ind := dh.getMaxPriority(start)
 		if dh.Heap[start].priority > carry.priority {
-			dh.Heap[start], dh.Heap[ind] = dh.Heap[ind], dh.Heap[start]
+			dh.swap(start, ind)
 			start = ind
 		} else {
 			return
@@ -80,18 +87,15 @@ func (dh *DHeap) siftDown(start int) {
 	}
 }
 
-func (dh *DHeap) Insert(elem, priority, index int) {
-	newNode := DHeapNode{
-		elem:       elem,
-		priority:   priority,
-		arrayIndex: index,
+func (dh *DHeap) Insert(priority int) {
+	newNode := &DHeapNode{
+		priority: priority,
 	}
 	dh.Heap = append(dh.Heap, newNode)
-	dh.Address[len(dh.Heap)-1] = newNode
 	dh.bubbleUp(len(dh.Heap) - 1)
 }
 
-func (dh *DHeap) Top() DHeapNode {
+func (dh *DHeap) Top() *DHeapNode {
 	carry := dh.Heap[0]
 	dh.Heap[0] = dh.Heap[len(dh.Heap)-1]
 	dh.Heap = dh.Heap[:len(dh.Heap)-1]
@@ -101,37 +105,13 @@ func (dh *DHeap) Top() DHeapNode {
 	return carry
 }
 
-func (dh *DHeap) Modify(priority, index int) {
-	el, ok := dh.Address[index]
-	if !ok {
-		panic("No node in heap!")
-	}
-	newNode := DHeapNode{
-		elem:       el.elem,
-		priority:   priority,
-		arrayIndex: el.arrayIndex,
-	}
-	dh.Heap[el.heapIndex] = newNode
-	dh.bubbleUp(el.heapIndex)
-}
-
 func main() {
 	h := NewDHeap(4)
 	arr := []int{89205, 44720, 70877, -30824, -75881, -1732, 3873, 34959, 55048, -72593}
-	for ind, el := range arr {
-		h.Insert(ind, el, ind)
+	for _, el := range arr {
+		h.Insert(el)
 	}
 	for len(h.Heap) > 0 {
 		fmt.Println(h.Top())
 	}
-	//fmt.Println("========================")
-	//for ind, el := range arr {
-	//	h.Insert(ind, el, ind)
-	//}
-	////for i := 0; i < 3; i++ {
-	//h.Modify(0, 0)
-	////}
-	//for len(h.Heap) > 0 {
-	//	fmt.Println(h.Top())
-	//}
 }
